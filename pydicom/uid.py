@@ -2,8 +2,8 @@
 """Dicom Unique identifiers"""
 # Copyright (c) 2008-2014 Darcy Mason
 # This file is part of pydicom, released under a modified MIT license.
-#    See the file license.txt included with this distribution, also
-#    available at https://github.com/darcymason/pydicom
+#    See the file LICENSE included with this distribution, also
+#    available at https://github.com/pydicom/pydicom
 
 import os
 import uuid
@@ -14,14 +14,14 @@ import re
 from pydicom._uid_dict import UID_dictionary
 from pydicom import compat
 
-
 valid_uid_re = '^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*$'
-'''Regular expression that matches valid UIDs. Does not enforce 64 char limit.
+'''Regular expression that matches valid UIDs.
+   Does not enforce 64 char limit.
 '''
 
 valid_prefix_re = '^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*\.$'
-'''Regular expression that matches valid UID prefixes. Does not enforce length
-constraints.
+'''Regular expression that matches valid UID prefixes.
+   Does not enforce length constraints.
 '''
 
 
@@ -33,6 +33,7 @@ class InvalidUID(Exception):
 
         >>> uid = '1.2.123.'
     '''
+
     def __init__(self, value):
         self.value = value
 
@@ -52,10 +53,12 @@ class UID(str):
     String representation (__str__) will be the name,
     __repr__ will be the full 1.2.840....
     """
+
     def __new__(cls, val):
         """Set up new instance of the class"""
-        # Don't repeat if already a UID class -- then may get the name
-        #     that str(uid) gives rather than the dotted number
+        # Don't repeat if already a UID class
+        # then may get the name that str(uid)
+        # gives rather than the dotted number
         if isinstance(val, UID):
             return val
         else:
@@ -89,19 +92,27 @@ class UID(str):
             self.is_little_endian = True
             self.is_deflated = False
 
-            if val == '1.2.840.10008.1.2':  # implicit VR little endian
+            # implicit VR little endian
+            if val == '1.2.840.10008.1.2':
                 pass
-            elif val == '1.2.840.10008.1.2.1':  # ExplicitVRLittleEndian
+
+            # ExplicitVRLittleEndian
+            elif val == '1.2.840.10008.1.2.1':
                 self.is_implicit_VR = False
-            elif val == '1.2.840.10008.1.2.2':  # ExplicitVRBigEndian
+
+            # ExplicitVRBigEndian
+            elif val == '1.2.840.10008.1.2.2':
                 self.is_implicit_VR = False
                 self.is_little_endian = False
-            elif val == '1.2.840.10008.1.2.1.99':  # DeflatedExplicitVRLittleEndian:
+
+            # DeflatedExplicitVRLittleEndian
+            elif val == '1.2.840.10008.1.2.1.99':
                 self.is_deflated = True
                 self.is_implicit_VR = False
             else:
                 # Any other syntax should be Explicit VR Little Endian,
-                #   e.g. all Encapsulated (JPEG etc) are ExplVR-LE by Standard PS 3.5-2008 A.4 (p63)
+                #   e.g. all Encapsulated (JPEG etc) are ExplVR-LE by
+                # Standard PS 3.5-2008 A.4 (p63)
                 self.is_implicit_VR = False
 
     def __str__(self):
@@ -109,7 +120,8 @@ class UID(str):
         return self.name
 
     def __eq__(self, other):
-        """Override string equality so either name or UID number match passes"""
+        """Override string equality so either name
+           or UID number match passes"""
         if str.__eq__(self, other) is True:  # 'is True' needed (issue 96)
             return True
         if str.__eq__(self.name, other) is True:  # 'is True' needed (issue 96)
@@ -118,6 +130,14 @@ class UID(str):
 
     def __ne__(self, other):
         return not self == other
+
+    @property
+    def is_private(self):
+        """Return True if the UID isn't an officially registered DICOM UID."""
+        if '1.2.840.10008' == self[:13]:
+            return False
+
+        return True
 
     def is_valid(self):
         '''
@@ -136,12 +156,15 @@ class UID(str):
         if not re.match(valid_uid_re, self):
             raise InvalidUID('UID is not a valid format: %s' % self)
 
-    # For python 3, any override of __cmp__ or __eq__ immutable requires
-    #   explicit redirect of hash function to the parent class
-    #   See http://docs.python.org/dev/3.0/reference/datamodel.html#object.__hash__
+    # For python 3, any override of __cmp__ or __eq__
+    #   immutable requires explicit redirect of hash
+    #   function to the parent class
+    #   See http://docs.python.org/dev/3.0/
+    #       reference/datamodel.html#object.__hash__
 
     def __hash__(self):
         return super(UID, self).__hash__()
+
 
 ExplicitVRLittleEndian = UID('1.2.840.10008.1.2.1')
 ImplicitVRLittleEndian = UID('1.2.840.10008.1.2')
@@ -155,29 +178,40 @@ JPEGLSLossy = UID('1.2.840.10008.1.2.4.81')
 JPEG2000Lossless = UID('1.2.840.10008.1.2.4.90')
 JPEG2000Lossy = UID('1.2.840.10008.1.2.4.91')
 
-UncompressedPixelTransferSyntaxes = [ExplicitVRLittleEndian,
-                                     ImplicitVRLittleEndian,
-                                     DeflatedExplicitVRLittleEndian,
-                                     ExplicitVRBigEndian, ]
+UncompressedPixelTransferSyntaxes = [
+    ExplicitVRLittleEndian,
+    ImplicitVRLittleEndian,
+    DeflatedExplicitVRLittleEndian,
+    ExplicitVRBigEndian,
+]
 
-JPEGLSSupportedCompressedPixelTransferSyntaxes = [JPEGLSLossless,
-                                                  JPEGLSLossy, ]
+JPEGLSSupportedCompressedPixelTransferSyntaxes = [
+    JPEGLSLossless,
+    JPEGLSLossy,
+]
 
-PILSupportedCompressedPixelTransferSyntaxes = [JPEGBaseLineLossy8bit,
-                                               JPEGLossless,
-                                               JPEGBaseLineLossy12bit,
-                                               JPEG2000Lossless,
-                                               JPEG2000Lossy, ]
-JPEG2000CompressedPixelTransferSyntaxes = [JPEG2000Lossless,
-                                           JPEG2000Lossy, ]
-JPEGLossyCompressedPixelTransferSyntaxes = [JPEGBaseLineLossy8bit,
-                                            JPEGBaseLineLossy12bit, ]
-NotCompressedPixelTransferSyntaxes = [ExplicitVRLittleEndian,
-                                      ImplicitVRLittleEndian,
-                                      DeflatedExplicitVRLittleEndian,
-                                      ExplicitVRBigEndian]
+PILSupportedCompressedPixelTransferSyntaxes = [
+    JPEGBaseLineLossy8bit,
+    JPEGLossless,
+    JPEGBaseLineLossy12bit,
+    JPEG2000Lossless,
+    JPEG2000Lossy,
+]
+JPEG2000CompressedPixelTransferSyntaxes = [
+    JPEG2000Lossless,
+    JPEG2000Lossy,
+]
+JPEGLossyCompressedPixelTransferSyntaxes = [
+    JPEGBaseLineLossy8bit,
+    JPEGBaseLineLossy12bit,
+]
+NotCompressedPixelTransferSyntaxes = [
+    ExplicitVRLittleEndian, ImplicitVRLittleEndian,
+    DeflatedExplicitVRLittleEndian, ExplicitVRBigEndian
+]
 
-# Many thanks to the Medical Connections for offering free valid UIDs (http://www.medicalconnections.co.uk/FreeUID.html)
+# Many thanks to the Medical Connections for offering free
+# valid UIDs (http://www.medicalconnections.co.uk/FreeUID.html)
 # Their service was used to obtain the following root UID for pydicom:
 pydicom_root_UID = '1.2.826.0.1.3680043.8.498.'
 pydicom_uids = {
@@ -226,10 +260,11 @@ def generate_uid(prefix=pydicom_root_UID, entropy_srcs=None):
     avail_digits = max_uid_len - len(prefix)
 
     if entropy_srcs is None:
-        entropy_srcs = [str(uuid.uuid1()),  # 128-bit from MAC/time/randomness
-                        str(os.getpid()),  # Current process ID
-                        hex(random.getrandbits(64))  # 64 bits randomness
-                        ]
+        entropy_srcs = [
+            str(uuid.uuid1()),  # 128-bit from MAC/time/randomness
+            str(os.getpid()),  # Current process ID
+            hex(random.getrandbits(64))  # 64 bits randomness
+        ]
     hash_val = hashlib.sha512(''.join(entropy_srcs).encode('utf-8'))
 
     # Convert this to an int with the maximum available digits

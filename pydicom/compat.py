@@ -2,8 +2,8 @@
 """Compatibility functions for python 2 vs later versions"""
 # Copyright (c) 2014 Darcy Mason
 # This file is part of pydicom, released under a modified MIT license.
-#    See the file license.txt included with this distribution, also
-#    available at http://github.com/darcymason/pydicom
+#    See the file LICENSE included with this distribution, also
+#    available at http://github.com/pydicom/pydicom
 
 # These are largely modeled on Armin Ronacher's porting advice
 # at http://lucumr.pocoo.org/2013/5/21/porting-to-python-3-redux/
@@ -21,11 +21,12 @@ if in_py2:
     string_types = (str, unicode)
 else:
     text_type = str
-    string_types = (str,)
+    string_types = (str, )
 
 if in_py2:
     # Have to run through exec as the code is a syntax error in py 3
     exec('def reraise(tp, value, tb):\n raise tp, value, tb')
 else:
+
     def reraise(tp, value, tb):
         raise value.with_traceback(tb)

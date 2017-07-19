@@ -17,10 +17,9 @@ from __future__ import print_function
 #
 # Copyright (c) 2010 Almar Klein
 # This file is released under the pydicom license.
-#    See the file license.txt included with the pydicom distribution, also
-#    available at https://github.com/darcymason/pydicom
+#    See the file LICENSE included with the pydicom distribution, also
+#    available at https://github.com/pydicom/pydicom
 #
-
 
 # I (Almar) performed some test to loading a series of data
 # in two different ways: loading all data, and deferring loading
@@ -37,7 +36,6 @@ from __future__ import print_function
 # - Full loading of data, warm: 3 sec
 # - Deferred loading of data, cold: 9 sec
 # - Deferred loading of data, warm: 3 sec
-
 
 import os
 import time
@@ -60,6 +58,7 @@ except ImportError:
 class ProgressBar(object):
     """ To print progress to the screen.
     """
+
     def __init__(self, char='-', length=20):
         self.char = char
         self.length = length
@@ -115,6 +114,7 @@ class ProgressBar(object):
 def _dummyProgressCallback(progress):
     """ A callback to indicate progress that does nothing. """
     pass
+
 
 _progressBar = ProgressBar()
 
@@ -263,29 +263,31 @@ def _getPixelDataFromDataset(ds):
         else:
             # Determine required range
             minReq, maxReq = data.min(), data.max()
-            minReq = min([minReq, minReq * slope + offset, maxReq * slope + offset])
-            maxReq = max([maxReq, minReq * slope + offset, maxReq * slope + offset])
+            minReq = min(
+                [minReq, minReq * slope + offset, maxReq * slope + offset])
+            maxReq = max(
+                [maxReq, minReq * slope + offset, maxReq * slope + offset])
 
             # Determine required datatype from that
             dtype = None
             if minReq < 0:
                 # Signed integer type
                 maxReq = max([-minReq, maxReq])
-                if maxReq < 2 ** 7:
+                if maxReq < 2**7:
                     dtype = np.int8
-                elif maxReq < 2 ** 15:
+                elif maxReq < 2**15:
                     dtype = np.int16
-                elif maxReq < 2 ** 31:
+                elif maxReq < 2**31:
                     dtype = np.int32
                 else:
                     dtype = np.float32
             else:
                 # Unsigned integer type
-                if maxReq < 2 ** 8:
+                if maxReq < 2**8:
                     dtype = np.uint8
-                elif maxReq < 2 ** 16:
+                elif maxReq < 2**16:
                     dtype = np.uint16
-                elif maxReq < 2 ** 32:
+                elif maxReq < 2**32:
                     dtype = np.uint32
                 else:
                     dtype = np.float32
@@ -303,6 +305,7 @@ def _getPixelDataFromDataset(ds):
 
 
 # The public functions and classes
+
 
 def read_files(path, showProgress=False, readPixelData=False, force=False):
     """ read_files(path, showProgress=False, readPixelData=False)
@@ -506,7 +509,8 @@ class DicomSeries(object):
 
     def __repr__(self):
         adr = hex(id(self)).upper()
-        return "<DicomSeries with %i images at %s>" % (len(self._datasets), adr)
+        data_len = len(self._datasets)
+        return "<DicomSeries with %i images at %s>" % (data_len, adr)
 
     def get_pixel_array(self):
         """ get_pixel_array()
@@ -600,7 +604,9 @@ class DicomSeries(object):
             ds = self._datasets[0]
             self._info = self._datasets[0]
             self._shape = [ds.Rows, ds.Columns]
-            self._sampling = [float(ds.PixelSpacing[0]), float(ds.PixelSpacing[1])]
+            self._sampling = [
+                float(ds.PixelSpacing[0]), float(ds.PixelSpacing[1])
+            ]
             return
 
         # Get previous
@@ -611,7 +617,9 @@ class DicomSeries(object):
 
         # Init measures to check (these are in 2D)
         dimensions = ds1.Rows, ds1.Columns
-        sampling = float(ds1.PixelSpacing[0]), float(ds1.PixelSpacing[1])  # row, column
+
+        # row, column
+        sampling = float(ds1.PixelSpacing[0]), float(ds1.PixelSpacing[1])
 
         for index in range(len(L)):
             # The first round ds1 and ds2 will be the same, for the

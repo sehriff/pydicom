@@ -3,8 +3,8 @@
 #
 # Copyright (c) 2008-2012 Darcy Mason
 # This file is part of pydicom, released under a modified MIT license.
-#    See the file license.txt included with this distribution, also
-#    available at https://github.com/darcymason/pydicom
+#    See the file LICENSE included with this distribution, also
+#    available at https://github.com/pydicom/pydicom
 #
 
 from pydicom import compat
@@ -14,10 +14,16 @@ from pydicom.compat import in_py2
 
 # Map DICOM Specific Character Set to python equivalent
 python_encoding = {
-    '': 'iso8859',           # default character set for DICOM
-    'ISO_IR 6': 'iso8859',   # alias for latin_1 too (iso_ir_6 exists as an alias to 'ascii')
+
+    # default character set for DICOM
+    '': 'iso8859',
+
+    # alias for latin_1 too (iso_ir_6 exists as an alias to 'ascii')
+    'ISO_IR 6': 'iso8859',
     'ISO_IR 13': 'shift_jis',
-    'ISO_IR 100': 'latin_1', # these also have iso_ir_1XX aliases in python 2.7
+
+    # these also have iso_ir_1XX aliases in python 2.7
+    'ISO_IR 100': 'latin_1',
     'ISO_IR 101': 'iso8859_2',
     'ISO_IR 109': 'iso8859_3',
     'ISO_IR 110': 'iso8859_4',
@@ -25,10 +31,9 @@ python_encoding = {
     'ISO_IR 127': 'iso_ir_127',  # Arabic
     'ISO_IR 138': 'iso_ir_138',  # Hebrew
     'ISO_IR 144': 'iso_ir_144',  # Russian
-    'ISO_IR 148': 'iso_ir_148', # Turkish
-    'ISO_IR 166': 'iso_ir_166', # Thai
-
-    'ISO 2022 IR 6': 'iso8859',   # alias for latin_1 too
+    'ISO_IR 148': 'iso_ir_148',  # Turkish
+    'ISO_IR 166': 'iso_ir_166',  # Thai
+    'ISO 2022 IR 6': 'iso8859',  # alias for latin_1 too
     'ISO 2022 IR 13': 'shift_jis',
     'ISO 2022 IR 87': 'iso2022_jp',
     'ISO 2022 IR 100': 'latin_1',
@@ -43,11 +48,11 @@ python_encoding = {
     'ISO 2022 IR 149': 'euc_kr',  # needs cleanup via clean_escseq()
     'ISO 2022 IR 159': 'iso-2022-jp',
     'ISO 2022 IR 166': 'iso_ir_166',
-
-    'ISO_IR 192': 'UTF8',     # from Chinese example, 2008 PS3.5 Annex J p1-4
+    'ISO_IR 192': 'UTF8',  # from Chinese example, 2008 PS3.5 Annex J p1-4
     'GB18030': 'GB18030',
-    'ISO 2022 GBK':'GBK',
-
+    'ISO 2022 GBK': 'GBK',  # from DICOM correction CP1234
+    'ISO 2022 58': 'GB2312',  # from DICOM correction CP1234
+    'GBK': 'GBK',  # from DICOM correction CP1234
 }
 
 default_encoding = "iso8859"
@@ -58,10 +63,11 @@ def clean_escseq(element, encodings):
        Korean encoding ISO 2022 IR 149 due to the G1 code element.
     """
     if 'euc_kr' in encodings:
-        return element.replace(
-            "\x1b\x24\x29\x43", "").replace("\x1b\x28\x42", "")
+        return element.replace("\x1b\x24\x29\x43", "").replace(
+            "\x1b\x28\x42", "")
     else:
         return element
+
 
 # DICOM PS3.5-2008 6.1.1 (p 18) says:
 #   default is ISO-IR 6 G0, equiv to common chr set of ISO 8859 (PS3.5 6.1.2.1)
@@ -89,7 +95,10 @@ def convert_encodings(encodings):
 
     try:
         encodings = [python_encoding[x] for x in encodings]
-    except KeyError:  # Assume that it is already the python encoding (is there a way to check this?)
+
+    # Assume that it is already the python encoding
+    # (is there a way to check this?)
+    except KeyError:
         pass
 
     if len(encodings) == 1:
@@ -119,18 +128,24 @@ def decode(data_element, dicom_character_set):
     # decode the string value to unicode
     # PN is special case as may have 3 components with differenct chr sets
     if data_element.VR == "PN":
-        # logger.warn("%s ... type: %s" %(str(data_element), type(data_element.VR)))
+        # logger.warn("%s ... type: %s" %(str(data_element),
+        # type(data_element.VR)))
         if not in_py2:
             if data_element.VM == 1:
                 data_element.value = data_element.value.decode(encodings)
             else:
-                data_element.value = [val.decode(encodings) for val in data_element.value]
+                data_element.value = [
+                    val.decode(encodings) for val in data_element.value
+                ]
         else:
             if data_element.VM == 1:
-                data_element.value = PersonNameUnicode(data_element.value, encodings)
+                data_element.value = PersonNameUnicode(data_element.value,
+                                                       encodings)
             else:
-                data_element.value = [PersonNameUnicode(value, encodings)
-                                      for value in data_element.value]
+                data_element.value = [
+                    PersonNameUnicode(value, encodings)
+                    for value in data_element.value
+                ]
     if data_element.VR in text_VRs:
         # Remove the first encoding if this is a multi-byte encoding
         if len(encodings) > 1:
@@ -150,6 +165,7 @@ def decode(data_element, dicom_character_set):
                 if isinstance(value, compat.text_type):
                     output.append(value)
                 else:
-                    output.append(clean_escseq(value.decode(encodings[0]), encodings))
+                    output.append(
+                        clean_escseq(value.decode(encodings[0]), encodings))
 
             data_element.value = output
